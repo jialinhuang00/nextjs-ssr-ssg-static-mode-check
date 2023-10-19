@@ -38,3 +38,7 @@ Route (app)                              Size     First Load JS
 ○  (Static)  automatically rendered as static HTML (uses no initial props)
 ●  (SSG)     automatically generated as static HTML + JSON (uses getStaticProps)```
 ````
+
+# Inspiration
+
+https://www.youtube.com/watch?v=E1HzFvXgrCs&ab_channel=DaveGray

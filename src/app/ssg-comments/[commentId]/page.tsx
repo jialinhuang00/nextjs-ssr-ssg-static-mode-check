@@ -1,18 +1,30 @@
-type Params = {
-  params: {
-    userId: string;
-  };
-};
-export default async function SsrUserPage({ params: { userId } }: Params) {
-  return <p className="text-black">params is {userId} </p>;
+export default async function SSGCommentsPage() {
+  return <p>`ssg`: /ssg-comments/[commentId]</p>;
 }
 
+/**
+ *
+ * Using `generateStaticParams` will result in SSG.
+ *
+ * If we return specific `[...]` in `generateStaticParams`, it will explicitly build specific pages.
+ *
+ * - /ssg-comments/[commentId]
+ *
+ *   - /ssg-comments/11
+ *
+ *   - /ssg-comments/22
+ *
+ *   - /ssg-comments/33
+ *
+ *  ...
+ *
+ */
 export async function generateStaticParams() {
-  const res = await fetch(
-    "https://jsonplaceholder.typicode.com/posts/1/comments"
-  );
+  const comments = await Promise.resolve([
+    { id: 11, commentText: "id 1 comment" },
+    { id: 22, commentText: "id 2 comment" },
+    { id: 33, commentText: "id 3 comment" },
+  ]);
 
-  if (!res.ok) throw new Error("Failed to fetch data");
-
-  return res.json();
+  return comments.map((comment) => ({ commentId: comment.id.toString() }));
 }
