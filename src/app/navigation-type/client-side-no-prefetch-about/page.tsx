@@ -6,7 +6,7 @@ export default async function ClientSideNavigationNoPrefetchAboutPage() {
     <div className="flex flex-col gap-4 p-8">
       <p>This is `Client Side With No prefetch Navigation` About Page</p>
       <Link href="/navigation-type">Back to /navigation-type</Link>
-      <pre className="max-w-[480px] whitespace-pre-wrap bg-[#fafafa]">
+      <pre className="max-w-[480px] whitespace-pre-wrap bg-[#eaeaea]">
         {JSON.stringify(serverData)}
       </pre>
     </div>

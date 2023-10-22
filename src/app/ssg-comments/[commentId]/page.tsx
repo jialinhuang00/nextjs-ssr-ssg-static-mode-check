@@ -10,21 +10,21 @@ export default async function SSGCommentsPage() {
  *
  * - /ssg-comments/[commentId]
  *
- *   - /ssg-comments/11
+ *   - /ssg-comments/1
  *
- *   - /ssg-comments/22
+ *   - /ssg-comments/2
  *
- *   - /ssg-comments/33
+ *   - /ssg-comments/3
  *
  *  ...
  *
  */
 export async function generateStaticParams() {
-  const comments = await Promise.resolve([
-    { id: 11, commentText: "id 1 comment" },
-    { id: 22, commentText: "id 2 comment" },
-    { id: 33, commentText: "id 3 comment" },
-  ]);
+  const postFourComments = await fetch(
+    "https://jsonplaceholder.typicode.com/posts/4/comments"
+  ).then((res) => res.json());
 
-  return comments.map((comment) => ({ commentId: comment.id.toString() }));
+  return postFourComments.map((comment: any) => ({
+    commentId: comment.id.toString(),
+  }));
 }

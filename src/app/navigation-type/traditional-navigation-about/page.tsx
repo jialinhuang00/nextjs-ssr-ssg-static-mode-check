@@ -4,7 +4,7 @@ export default async function TraditionalAboutPage() {
     <div className="flex flex-col gap-4 p-8">
       <p>This is `Traditional Navigaiton` About page</p>
       <a href="/navigation-type">Back to /navigation-type also by ssr</a>
-      <pre className="max-w-[480px] whitespace-pre-wrap bg-[#fafafa]">
+      <pre className="max-w-[480px] whitespace-pre-wrap bg-[#eaeaea]">
         {JSON.stringify(serverData)}
       </pre>
     </div>
