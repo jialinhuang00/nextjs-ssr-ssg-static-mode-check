@@ -1,0 +1,31 @@
+next build, Next.js 16.4.6, React 19.3.1, previous caching model (no cacheComponents).
+Run by hand on 2026-11-21 (macOS, Node 22.22.3, pnpm 10.32.1). Route table copied verbatim.
+
+Route (app)                Revalidate  Expire
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/get
+├ ○ /api/get-force-static
+├ ƒ /api/post
+├ ƒ /connection
+├ ƒ /cookies
+├ ƒ /dynamic-segment/[id]
+├ ○ /fetch-default
+├ ○ /fetch-force-cache
+├ ƒ /fetch-no-store
+├ ○ /fetch-revalidate             30s      1y
+├ ƒ /force-dynamic
+├ ○ /force-static-cookies
+├ ○ /isr                          30s      1y
+├ ○ /isr-on-demand
+├ ƒ /search-params
+├   /ssg-strict/[id]
+│ ├ ● /ssg-strict/1
+│ ├ ● /ssg-strict/2
+│ └ ● /ssg-strict/3
+├   /ssg/[id]
+│ ├ ● /ssg/1
+│ ├ ● /ssg/2
+│ └ ● /ssg/3
+├ ○ /static
+└ ○ /use-client

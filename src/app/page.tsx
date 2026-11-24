@@ -1,12 +1,7 @@
-//{cache: "no-store"} -> ssr
-// {} -> static
-export default async function Home() {
-  const res = await fetch("https://api.quotable.io/random?tags=technology", {
-    cache: "no-cache",
-  });
-  return (
-    <pre className="w-80vw m-8 whitespace-break-spaces">
-      static{JSON.stringify(await res.json())}
-    </pre>
-  );
+import { Explorer } from './explorer'
+import { ROUTES } from './routes'
+
+// POST /api/post cannot be opened in an iframe (GET only); try it with curl -X POST.
+export default function Home() {
+  return <Explorer routes={ROUTES} />
 }

@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nextjs-modes",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    // Self-reference, used by the ISR queue to re-render a page. Must match "name".
+    { "binding": "WORKER_SELF_REFERENCE", "service": "nextjs-modes" }
+  ],
+  "r2_buckets": [
+    // Create before the first deploy: npx wrangler r2 bucket create nextjs-modes-cache
+    { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "nextjs-modes-cache" }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" },
+      { "name": "NEXT_TAG_CACHE_DO_SHARDED", "class_name": "DOShardedTagCache" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["DOQueueHandler", "DOShardedTagCache"] }
+  ],
+  "routes": [
+    // Custom domain on the jialin00.com zone; Cloudflare creates the DNS record on deploy.
+    { "pattern": "nextmode.jialin00.com", "custom_domain": true }
+  ]
+}

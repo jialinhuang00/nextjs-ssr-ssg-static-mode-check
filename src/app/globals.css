@@ -1,12 +1,286 @@
-/* @tailwind base; */
-@tailwind components;
-@tailwind utilities;
-
-html {
-  scroll-behavior: smooth;
+/* Monochrome, from hiroki-jialin00-embed-style (skins/nakano-tokens.json "monochrome",
+   signature rules in skins/nakano.css n-monochrome). Tokens copied as stored; each signature
+   rule below names the prompt trait it carries. Pure black and white by design, no dark variant. */
+:root {
+  --bg: #ffffff;
+  --ink: #000000;
+  --muted: #525252;
+  --line: #000000;
+  --radius: 0;
+  --bw: 1px;
+  --fd: var(--fm);
+  --fb: -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+  --fm: var(--font-mono), ui-monospace, Menlo, 'PingFang TC', monospace;
+  color-scheme: light;
 }
 
-body,
-p {
-  margin: 0;
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+/* texture: a faint horizontal line every 4px, from the token's repeating-linear-gradient */
+body {
+  font: 16px/1.6 var(--fb); color: var(--ink);
+  background: var(--bg) repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,.015) 1px, rgba(0,0,0,.015) 2px);
+  background-size: 100% 4px;
 }
+a { color: var(--ink); text-underline-offset: 3px; }
+code, time, .mono { font-family: var(--fm); font-size: 13px; }
+
+html[data-lang='zh'] [data-l='en'],
+html:not([data-lang='zh']) [data-l='zh'] { display: none; }
+
+/* Buttons: sharp, uppercase, wide tracking, thin black border */
+.btn {
+  font: 500 12px/1.2 var(--fm); letter-spacing: .1em; text-transform: uppercase; padding: 6px 10px; cursor: pointer;
+  border: var(--bw) solid var(--line); border-radius: 0; background: #fff; color: #000;
+}
+/* Emphasis by inversion: black/white swap, instant (no easing) */
+.btn:hover, .btn[aria-pressed='true'] { background: #000; color: #fff; }
+.btn[aria-pressed='true']:hover { background: #fff; color: #000; }
+/* Focus: 3px solid black outline, offset 3px */
+.btn:focus-visible { outline: 3px solid #000; outline-offset: 3px; }
+
+/* ---------- home: header line, sidebar of routes, iframe takes the rest ---------- */
+/* The one departure from Monochrome: four mode colours, so a route's mode reads at a glance.
+   Each is dark enough for white text on it (all above 4.5:1). */
+:root { --static: #1d4ed8; --ssg: #047857; --isr: #b45309; --dynamic: #b91c1c; }
+[data-kind='static'] { --k: var(--static); }
+[data-kind='ssg'] { --k: var(--ssg); }
+[data-kind='isr'] { --k: var(--isr); }
+[data-kind='dynamic'] { --k: var(--dynamic); }
+
+.home {
+  height: 100vh; max-width: 1280px; margin: 0 auto; padding: 0 clamp(16px, 5vw, 64px) 12px;
+  display: grid; grid-template-columns: 200px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 10px 16px;
+}
+/* Thick rule (4px) under the headline, kept to one line */
+.site-header { grid-column: 1 / -1; border-bottom: 4px solid #000; padding: 14px 0 8px; display: flex; align-items: baseline; gap: 12px; }
+.site-header h1 { margin: 0; font: 700 26px/1 var(--fd); letter-spacing: -.04em; }
+/* Mono labels: uppercase, widest tracking */
+.legend { font: 500 11px/1.4 var(--fm); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.lang { margin-left: auto; display: flex; gap: 4px; }
+
+.side { overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.group h2 { margin: 0 0 4px; padding-bottom: 2px; border-bottom: 2px solid var(--k); color: var(--k); font: 700 11px/1.4 var(--fm); letter-spacing: .1em; text-transform: uppercase; }
+.route {
+  display: block; width: 100%; text-align: left; cursor: pointer; margin: 0; padding: 3px 6px 3px 8px;
+  font: 13px/1.4 var(--fm); color: #000; background: #fff; border: 0; border-left: 4px solid var(--k);
+}
+/* Emphasis by inversion, in the group's colour */
+.route:hover { background: color-mix(in srgb, var(--k) 12%, #fff); }
+.route[aria-pressed='true'] { background: var(--k); color: #fff; }
+.route:focus-visible { outline: 3px solid #000; outline-offset: 1px; }
+
+.pane { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.info { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.info strong { font-family: var(--fm); }
+.chip { background: var(--k); color: #fff; padding: 1px 8px; font: 700 13px/1.5 var(--fm); }
+.info .tools { margin-left: auto; display: flex; gap: 10px; align-items: baseline; }
+.api-note { font-style: italic; color: #262626; }
+/* Cards: thin black border, zero shadow; takes all height left in the pane */
+.frame { flex: 1 1 auto; min-height: 0; width: 100%; border: 1px solid #000; background: #fff; }
+
+/* Phone: routes become a horizontal strip above the iframe */
+@media (max-width: 700px) {
+  .home { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }
+  .side { flex-direction: row; overflow-x: auto; overflow-y: hidden; gap: 10px; padding-bottom: 4px; }
+  .group { flex: 0 0 auto; }
+  .site-header h1 { font-size: 20px; }
+}
+
+/* ---------- a page inside the iframe ----------
+   Fits the iframe without page scroll: title across the top, facts and the expected
+   behaviour on the left, the source on the right. Only the code column scrolls, and only
+   when a file is longer than the frame. */
+body:has(.stamp) { background: #fff; }
+.stamp { max-width: 900px; margin: 0 auto; padding: 12px 18px 18px; }
+.stamp header { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.stamp h1 { margin: 0; font: 700 22px/1.1 var(--fm); letter-spacing: -.02em; }
+.stamp header p { font-style: italic; color: #262626; margin: 0; }
+/* metadata in one row: LABEL value  LABEL value ..., wrapping when the frame is narrow */
+.stamp .facts { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 22px; margin: 8px 0 0; }
+.stamp .fact { display: flex; align-items: baseline; gap: 8px; }
+.stamp .age { background: none; color: #000; border: 0; padding: 0 2px; font: 700 12px/1.5 var(--fm); min-width: 3ch; text-align: center; }
+.stamp .age:empty { display: none; }
+.stamp .facts dt { font: 500 11px/1.9 var(--fm); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.stamp .facts dd { margin: 0; font-family: var(--fm); font-size: 13px; overflow-wrap: anywhere; }
+/* the mode is the one inverted block on the page, like the inverted middle node */
+.stamp .mode { background: var(--k, #000); color: #fff; padding: 0 6px; font-weight: 700; }
+/* Heavy rule above the result, hairline below, no box */
+.stamp .how { border-top: 4px solid #000; padding: 8px 0 0; margin: 12px 0; }
+.stamp .how h2, .stamp .code h2 { margin: 0 0 4px; font: 500 11px/1.4 var(--fm); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.stamp .how h2 { color: #000; }
+.stamp .how p { margin: 4px 0; font-size: 13.5px; line-height: 1.55; white-space: pre-line; }
+.stamp .note { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin: 8px 0 0; }
+/* The route's own source, so the factor named above can be found in the file */
+.stamp .code { margin-top: 14px; }
+.stamp .code pre { margin: 0; padding: 10px 12px; overflow: auto; background: #f5f5f5; border-left: 4px solid #000; font: 9.6px/1.5 var(--fm); tab-size: 2; }
+/* one span per line; the token spans inside a line stay inline */
+.stamp .code pre code > span { display: block; }
+.stamp .code .add { background: #dcfce7; color: #14532d; }
+.stamp .code .del { background: #fee2e2; color: #7f1d1d; }
+
+/* Narrow frame: one column, the page scrolls as usual */
+.stamp .hint { margin: 6px 0 0; font: 13px/1.5 var(--fm); }
+.route .status { opacity: .7; }
+.stamp .btn.reload { margin-left: 10px; padding: 2px 8px; font-size: 11px; vertical-align: 1px; }
+/* Vertical timeline: a rule down the left, one dot per moment. Filled dot = a page is made,
+   orange = the stale answer that triggers the rebuild, hollow = nothing happens. */
+.stamp .timeline { list-style: none; margin: 6px 0 8px; padding: 0 0 0 18px; border-left: 2px solid #000; margin-left: 6px; }
+.stamp .timeline li { position: relative; display: grid; grid-template-columns: 76px 1fr; gap: 8px; padding: 3px 0; font-size: 13px; line-height: 1.45; }
+.stamp .timeline li::before { content: ''; position: absolute; left: -25px; top: 8px; width: 10px; height: 10px; border-radius: 50%; background: #fff; border: 2px solid #000; }
+.stamp .timeline li[data-tone='new']::before { background: var(--ssg); border-color: var(--ssg); }
+.stamp .timeline li[data-tone='stale']::before { background: var(--isr); border-color: var(--isr); }
+.stamp .timeline li[data-tone='idle'] { color: var(--muted); }
+.stamp .timeline li[data-tone='idle']::before { border-style: dashed; border-color: var(--muted); }
+.stamp .timeline time { font: 500 12px/1.9 var(--fm); }
+.info .compare { font: 13px/1.4 var(--fm); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.info .compare [data-kind] { color: var(--k); font-weight: 700; }
+/* dev-only snackbar: fixed at the bottom, takes no layout space, closed until the next page load */
+.dev-warning { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 10; width: min(640px, calc(100vw - 32px));
+  display: flex; gap: 12px; align-items: start; margin: 0; padding: 10px 12px; background: #000; color: #fff; font: 13px/1.5 var(--fm); }
+.dev-warning button { flex: none; background: none; border: 1px solid #fff; color: #fff; font: 12px/1 var(--fm); padding: 4px 8px; cursor: pointer; }
+.group h2 button { all: inherit; display: flex; justify-content: space-between; width: 100%; cursor: pointer; border: 0; padding: 0; margin: 0; }
+.group h2 button:focus-visible { outline: 3px solid #000; outline-offset: 2px; }
+.btn[aria-busy='true'] { background: #000; color: #fff; cursor: progress; }
+/* Route handlers: a small JSON block instead of the iframe, diffed against the last reload */
+.api { border: 1px solid #000; background: #fff; padding: 10px 12px; align-self: start; width: min(100%, 560px); }
+.api-head { margin: 0 0 6px; font: 12.5px/1.5 var(--fm); color: var(--muted); }
+.api pre { margin: 0; padding: 8px 10px; background: #f5f5f5; border-left: 4px solid #000; font: 12.5px/1.55 var(--fm); overflow-x: auto; }
+.api pre span { display: block; }
+.api .add { background: #dcfce7; color: #14532d; }
+.api .del { background: #fee2e2; color: #7f1d1d; }
+.extra { display: block; margin: 0 0 2px 12px; padding: 1px 6px; font: 12px/1.5 var(--fm); color: var(--muted); border-left: 2px dotted var(--k); cursor: help; width: fit-content; }
+.extra:hover, .extra:focus-visible { color: #000; outline: none; text-decoration: underline; }
+/* The popover sits outside the scrolling sidebar (position: fixed) so it is not clipped */
+.peek { position: fixed; z-index: 20; transform: scale(.6); transform-origin: top left; max-width: min(520px, calc(100vw - 240px)); max-height: calc((100vh - 32px) / .6); overflow: hidden; background: #fff; border: 1px solid #000; box-shadow: 4px 4px 0 #000; padding: 8px 10px; pointer-events: none; }
+.peek-file { font: 500 11px/1.4 var(--fm); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.peek pre { margin: 0; padding: 8px 10px; background: #f5f5f5; border-left: 4px solid #000; font: 12px/1.5 var(--fm); white-space: pre; overflow: hidden; }
+.peek-note { margin: 0 0 8px; font-size: 13.5px; line-height: 1.55; white-space: pre-line; }
+.stamp .code .hdr { font-weight: 700; color: #000; }
+.stamp .code .hdr + .hdr { margin-bottom: 6px; }
+.stamp .cmp { border-collapse: collapse; width: 100%; margin: 8px 0 4px; font-size: 12.5px; line-height: 1.45; }
+.stamp .cmp th { text-align: left; font: 500 11px/1.4 var(--fm); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid #000; padding: 4px 8px 4px 0; }
+.stamp .cmp td { border-bottom: 1px solid #000; padding: 5px 8px 5px 0; vertical-align: top; }
+.stamp .cmp td code, .stamp .cmp td a { font-family: var(--fm); font-size: 12.5px; white-space: nowrap; }
+/* the row for the page being viewed */
+.stamp .cmp tr[aria-current] td { background: #000; color: #fff; }
+.stamp .cmp tr[aria-current] a { color: #fff; }
+.stamp .cmp tr:last-child td { border-bottom: 0; }
+/* the age number lights up in the mode's colour on each new second, then fades back to black */
+@keyframes tick { from { color: var(--k, #16a34a); } to { color: inherit; } }
+.tick { animation: tick .7s ease-out; }
+@media (prefers-reduced-motion: reduce) { .tick { animation: none; } }
+.sym { text-transform: none; }
+/* pages shown inside the home iframe render at 80%; set by the script in layout.tsx */
+html.framed { zoom: .8; }
+
+/* /about: versions, the build time / run time diagram, where each page is made */
+.about { max-width: 1280px; margin: 0 auto; padding: 0 clamp(16px, 5vw, 64px) 48px; }
+.about section { max-width: 980px; }
+.about section { margin-top: 28px; }
+.about h2 { margin: 0 0 8px; font: 500 11px/1.4 var(--fm); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.about p { white-space: pre-line; margin: 8px 0; }
+.about .versions { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 0; font: 13px/1.6 var(--fm); }
+.about .versions div { display: flex; gap: 6px; }
+.about .versions dt { color: var(--muted); }
+.about .versions dd { margin: 0; font-weight: 700; }
+.about .arch { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.about .lane { border: 1px solid #000; padding: 12px; }
+.about h3 { margin: 0 0 10px; font: 700 12px/1.4 var(--fm); letter-spacing: .06em; text-transform: uppercase; }
+.about .flow, .about .stores { list-style: none; margin: 0; padding: 0; }
+.about .flow li { position: relative; border: 2px solid #000; padding: 6px 8px; font-size: 14px; }
+.about .flow li + li { margin-top: 22px; }
+/* the arrow between two steps */
+.about .flow li + li::before { content: '↓'; position: absolute; top: -21px; left: 12px; font: 700 14px/20px var(--fm); }
+.about .flow code, .about .stores code { display: block; font: 700 12.5px/1.5 var(--fm); }
+.about .flow li > span, .about .stores li > span { display: block; font-size: 13.5px; line-height: 1.5; }
+.about .stores { margin-top: 14px; padding-top: 10px; border-top: 1px dashed #000; display: grid; gap: 8px; }
+.about .stores li { border-left: 4px solid #000; padding-left: 8px; }
+.about .cmp { width: 100%; border-collapse: collapse; font-size: 14px; }
+.about .cmp th { text-align: left; font: 500 11px/1.4 var(--fm); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid #000; padding: 4px 12px 4px 0; }
+.about .cmp td { vertical-align: top; padding: 6px 12px 6px 0; border-bottom: 1px solid #000; }
+.about .cmp td code { white-space: nowrap; font-size: 12.5px; }
+.site-header h1 a { color: inherit; text-decoration: none; }
+.site-header nav { display: flex; gap: 12px; }
+.site-header nav [aria-current] { color: var(--ink); font-weight: 700; }
+/* fixed width so the paths after it line up; wide enough for "○ Static, ISR 30s" */
+.about .mode-tag { display: inline-block; width: 19ch; margin-right: 8px; color: var(--k); font: 700 11.5px/1.4 var(--fm); white-space: nowrap; }
+/* a group's shared answer, centred in the rows it spans */
+.about .cmp td.merged { vertical-align: middle; text-align: center; border-left: 1px solid #000; padding: 6px 12px; }
+
+/* /server-vs-client: the two halves side by side, stacked on a phone */
+/* /rsc: the JS switch and the two iframes (blue = server, red = client, the sidebar's colours) */
+.rsc-switch { display: flex; align-items: center; gap: 6px; margin: 12px 0 8px; font: 13px/1.4 var(--fm); }
+.rsc-switch span { margin-right: 4px; }
+.rsc-switch button { font: 700 13px/1 var(--fm); padding: 6px 12px; background: #fff; color: #000; border: 2px solid #000; cursor: pointer; }
+.rsc-switch button[aria-pressed='true'] { background: #000; color: #fff; }
+.rsc-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.rsc-pair figure { margin: 0; }
+.rsc-pair figure[data-side='server'] { --k: var(--static); }
+.rsc-pair figure[data-side='client'] { --k: var(--dynamic); }
+.rsc-pair figcaption { color: var(--k); font: 700 12px/1.4 var(--fm); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
+.rsc-pair iframe { display: block; width: 100%; height: 560px; border: 2px solid var(--k); background: #fff; }
+.rsc-found { margin: 6px 0 0 !important; font-size: 13px; }
+
+/* The demo pages inside those iframes. They keep full size: html.framed is set by a script,
+   which does not run with JS off, and the two states should not differ in zoom. */
+html.framed:has(.demo) { zoom: 1; }
+.demo { padding: 14px 16px; font: 14px/1.6 var(--fm); }
+.demo-count { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; }
+.demo-count button { font: 700 18px/1 var(--fm); padding: 8px 16px; background: #fff; border: 2px solid #000; cursor: pointer; }
+.demo-count button:active { background: #000; color: #fff; }
+.demo-count output { font: 700 28px/1 var(--fm); min-width: 2ch; }
+.demo dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 0; }
+.demo dt { color: var(--muted); }
+.demo dd { margin: 0; overflow-wrap: anywhere; }
+.demo details { margin-top: 14px; border-top: 1px dashed #000; padding-top: 8px; font-size: 12.5px; }
+.demo summary { cursor: pointer; font-weight: 700; margin-bottom: 6px; }
+
+/* /rsc: payload sample, pattern lists, the page's own code */
+.about pre { margin: 6px 0 0; padding: 8px 10px; overflow: auto; background: #f5f5f5; border-left: 4px solid #000; font: 12px/1.5 var(--fm); }
+.about .patterns { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.about .patterns p { margin: 0; }
+.about ul.plain { margin: 8px 0; padding-left: 20px; }
+.about ul.plain li { margin: 4px 0; }
+/* /rsc subheadings hold code ('use client'), so no uppercase */
+/* /rsc reads as an article: h2 is a big black heading with a rule, h3 a smaller bold one, both
+   in original case because they hold code ('use client'). /about keeps its small grey labels. */
+.rsc section { margin-top: 44px; }
+/* inline code in prose and headings: grey box, so it stands apart from the mono-free prose */
+.rsc :not(pre) > code { font: 0.88em/1.4 var(--fm); background: #eeeeee; border: 1px solid #d4d4d4; padding: 0 4px; border-radius: 3px; white-space: nowrap; }
+/* two code examples side by side, stacked on a narrow screen */
+.rsc .code-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+/* each column is a sentence row plus a code row; subgrid shares the rows across both columns,
+   so the two code blocks start at the same height even when one sentence is longer */
+.rsc .code-pair > div { min-width: 0; display: grid; grid-row: span 2; grid-template-rows: subgrid; row-gap: 0; }
+.rsc .code-pair > div > pre { align-self: start; }
+.rsc section > h2 { font: 700 22px/1.3 var(--fm); letter-spacing: -.02em; text-transform: none; color: var(--ink); border-bottom: 3px solid #000; padding-bottom: 6px; margin-bottom: 12px; }
+.rsc section > h3 { font: 700 15px/1.4 var(--fm); letter-spacing: 0; text-transform: none; color: var(--ink); margin: 28px 0 6px; }
+/* a right arrow before each /rsc subheading, in place of the old left bar */
+/* inline-block keeps the underline off the arrow */
+.rsc section > h3::before { content: '→'; display: inline-block; margin-right: .5em; }
+/* an orange marker stroke drawn across the lower half of the heading text, slightly wavy so it
+   reads as hand-drawn; box-decoration-break repeats it on each line when the heading wraps */
+.rsc section > h3 .scribble { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M3 13 C 35 7 70 16 105 10 S 170 14 197 7' fill='none' stroke='%23f97316' stroke-width='12' stroke-linecap='round' opacity='.5'/%3E%3C/svg%3E") no-repeat 0 100% / 100% .8em; padding: 0 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.about-code h2 { margin-top: 18px; }
+/* syntax-coloured blocks (highlight.tsx): one span per line */
+.hl .line { display: block; }
+/* in a heading the marker stroke is the emphasis; code there drops its grey box so the stroke
+   runs under it too (the heading is already monospace) */
+.rsc section > h3 code { background: none; border: 0; padding: 0; font: inherit; }
+/* /rsc quick Q&A: bold question, answer right under it, a dashed rule between pairs */
+.rsc .qa { margin: 8px 0 0; }
+.rsc .qa > div { padding: 10px 0; border-bottom: 1px dashed #000; }
+.rsc .qa dt { font-weight: 700; }
+.rsc .qa dt::before { content: 'Q '; font-family: var(--fm); color: #ea580c; }
+.rsc .qa dd { margin: 4px 0 0; white-space: pre-line; }  /* \n in an answer starts a new line */
+.rsc .qa > div.sub { margin-left: 28px; }  /* follow-ups to the question above */
+/* the component's own code, under the demo inside each iframe */
+.demo-code { padding: 0 16px 16px; }
+.demo-code h2 { margin: 0 0 4px; font: 500 11px/1.4 var(--fm); color: var(--muted); }
+.demo-code pre { margin: 0; padding: 8px 10px; overflow: auto; background: #f5f5f5; border-left: 4px solid #000; font: 11.5px/1.5 var(--fm); }
+/* /rsc JS switch: a hint that it acts on the iframes only, and a badge on each box while JS is off */
+.rsc-switch { flex-wrap: wrap; }
+.rsc-hint { margin-left: 8px; color: var(--muted); font: 12.5px/1.4 var(--fb); }
+.rsc-off { margin-left: 8px; padding: 1px 6px; background: #000; color: #fff; font: 700 11px/1.4 var(--fm); letter-spacing: 0; text-transform: none; }
+.rsc-pair figure:has(.rsc-off) iframe { border-style: dashed; }

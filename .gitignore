@@ -33,3 +33,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# OpenNext / Wrangler
+/.open-next/
+/.wrangler/
+.dev.vars
+
+# written by scripts/gen-sources.mjs before dev and build
+/src/app/sources.generated.ts

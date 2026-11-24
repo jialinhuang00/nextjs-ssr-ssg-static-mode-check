@@ -1,0 +1,56 @@
+# cc/ sub-app (cacheComponents + partialPrefetching + experimental.disableResumeDataCacheCompression)
+# measured 2026-11-22T14:28Z with bench/stream-timing.py, a fresh random id each run, two visits.
+# cc/.next BUILD_ID UrZLQvUicsbaB063L70yV, built 18:30 local; required-server-files.json has
+# "disableResumeDataCacheCompression": true. The 2 s wait in cc/ is fetch('https://httpbin.org/delay/2'),
+# so the page time also includes the round trip to httpbin.
+
+## next start (localhost:3201)
+$ python3 -I bench/stream-timing.py http://localhost:3201 /
+visit 1: http://localhost:3201/764727784 -> 200
+    0.03s   1039 bytes loading=True rendered=False
+    0.05s   4450 bytes loading=True rendered=False
+    2.79s    247 bytes loading=False rendered=True
+    2.79s     73 bytes loading=False rendered=False
+    2.79s    989 bytes loading=False rendered=True
+    2.81s   4349 bytes loading=True rendered=True
+    2.81s     14 bytes loading=False rendered=False
+  rendered at: 2026-11-22T14:28:25.410Z
+visit 2: http://localhost:3201/764727784 -> 200
+    0.01s   6018 bytes loading=True rendered=True
+  rendered at: 2026-11-22T14:28:25.410Z
+# second visit: same rendered time, whole page in one chunk -> stored and served.
+
+## Cloudflare Worker (https://cc.nextmode.jialin00.com)
+$ python3 -I bench/stream-timing.py https://cc.nextmode.jialin00.com /
+visit 1: https://cc.nextmode.jialin00.com/174435156 -> 200
+    1.06s    451 bytes loading=False rendered=False
+    1.06s    588 bytes loading=True rendered=False
+    1.13s   1363 bytes loading=True rendered=False
+    1.13s   1369 bytes loading=False rendered=False
+    1.13s   1369 bytes loading=False rendered=False
+    1.13s    349 bytes loading=False rendered=False
+    3.88s    247 bytes loading=False rendered=True
+    3.88s   1062 bytes loading=False rendered=True
+    3.88s   1363 bytes loading=True rendered=False
+    3.88s   1369 bytes loading=False rendered=False
+    3.88s   1369 bytes loading=False rendered=False
+    3.88s     71 bytes loading=False rendered=False
+  rendered at: 2026-11-22T14:27:52.998Z
+visit 2: https://cc.nextmode.jialin00.com/174435156 -> 200
+    0.52s    447 bytes loading=False rendered=False
+    0.52s    592 bytes loading=True rendered=False
+    0.56s   1363 bytes loading=True rendered=False
+    0.56s   1369 bytes loading=False rendered=False
+    0.56s   1369 bytes loading=False rendered=False
+    0.56s    349 bytes loading=False rendered=False
+    3.19s    247 bytes loading=False rendered=True
+    3.19s   1062 bytes loading=False rendered=True
+    3.21s   1363 bytes loading=True rendered=False
+    3.21s   1369 bytes loading=False rendered=False
+    3.21s   1369 bytes loading=False rendered=False
+    3.21s     71 bytes loading=False rendered=False
+  rendered at: 2026-11-22T14:27:56.261Z
+# second visit: a new rendered time -> made again, not served from the store.
+# Opening the same id (174435156) in Chrome right after: "This page couldn't load",
+# "A server error occurred", ERROR 189000225. The HTML is 200; the error comes later in the stream.
+# So disableResumeDataCacheCompression did not make the second visit work on Workers.

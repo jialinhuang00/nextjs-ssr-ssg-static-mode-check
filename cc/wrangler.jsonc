@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // A separate Worker from the parent app (nextjs-modes), so deploying here never replaces it.
+  "name": "nextjs-modes-cc",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "nextjs-modes-cc" }],
+  "r2_buckets": [{ "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "nextjs-modes-cc-cache" }],
+  "routes": [{ "pattern": "cc.nextmode.jialin00.com", "custom_domain": true }]
+}
