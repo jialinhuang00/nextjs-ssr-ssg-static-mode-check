@@ -19,15 +19,14 @@ Every page prints the time it was rendered. Reload and watch the time:
 
 The home page lists every route with its page source, the diff against a neighbouring route, and what to do to see the difference (reload, add a cookie, change `?q=`).
 
-| Group | Routes |
+The routes, in the same four groups as the sidebar of the home page:
+
+| Mode | Routes |
 | --- | --- |
-| No request data | `/static`, `/use-client` |
-| `generateStaticParams` | `/ssg/[id]`, `/ssg-fallback/[id]`, `/ssg-strict/[id]`, `/dynamic-segment/[id]` |
-| `export const dynamic` | `/force-dynamic`, `/force-dynamic-loading`, `/force-static-cookies` |
-| Request-time APIs | `/cookies`, `/search-params`, `/connection` |
-| `fetch` options | `/fetch-default`, `/fetch-force-cache`, `/fetch-no-store`, `/fetch-revalidate`, `/connection-fetch` |
-| ISR | `/isr`, `/isr-on-demand` |
-| Route handlers | `/api/get`, `/api/get-force-static`, `/api/post` |
+| ○ Static | `/static`, `/use-client`, `/force-static-cookies`, `/fetch-default`, `/fetch-force-cache`, `/api/get-force-static` |
+| ● SSG | `/ssg/[id]`, `/ssg-fallback/[id]`, `/ssg-strict/[id]` |
+| ○ ISR | `/isr`, `/fetch-revalidate`, `/isr-on-demand` |
+| ƒ Dynamic | `/dynamic-segment/[id]`, `/force-dynamic`, `/force-dynamic-loading`, `/cookies`, `/search-params`, `/connection`, `/connection-fetch`, `/fetch-no-store`, `/api/get`, `/api/post` |
 
 `/rsc` explains Server and Client Components. `/about` lists the pages by mode.
 
