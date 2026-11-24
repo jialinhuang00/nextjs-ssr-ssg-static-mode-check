@@ -264,8 +264,8 @@ export const ROUTES: RouteInfo[] = [
     href: '/isr-on-demand', base: '/isr-on-demand', diffFrom: '/static', expected: '○', measured: '○',
     factor: { en: "Static until revalidatePath('/isr-on-demand') is called.", zh: "靜態頁，直到有人呼叫 revalidatePath('/isr-on-demand')。" },
     test: {
-      en: 'Reload as often as you like: the time stays. Press revalidatePath below, then reload: the time changes once and stays again until the next press.',
-      zh: '怎麼 reload 時間都不變。按下面的 revalidatePath，再 reload：時間換一次，然後又停住，直到下次再按。',
+      en: 'Reload as often as you like: the time stays.\nPress revalidatePath below and the time changes, then stays again. The page reloads by itself after the press. The press and the reload each make the page again; both times are listed under the button.',
+      zh: '怎麼 reload 時間都不變。\n按下面的 revalidatePath，時間會換，換完又停住。按了之後，頁面會自動 reload。按下去跟 reload 各讓 server 重新產生一次頁面，按鈕下面會列出這兩次的時間。',
     },
   },
   {

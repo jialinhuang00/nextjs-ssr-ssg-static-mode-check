@@ -12,7 +12,7 @@ export const EXTRA_NOTES: Record<string, L> = {
     zh: 'client component。cookie 是瀏覽器自己用 document.cookie 存的，沒有經過 server；存完就 reload，下一個 request 的 Cookie header 才會帶著它。/force-static-cookies 也 import 這個檔案。',
   },
   'src/app/isr-on-demand/revalidate-button.tsx': {
-    en: 'A client component around the server action, so the button shows "…" while it runs and the time it finished afterwards.',
-    zh: '包住 server action 的 client component。按下去顯示「…」，做完顯示完成的時間。',
+    en: 'A client component around the server action. After the action it reloads the page, then shows two times: the render that came back with the action, and the render made by the reload.',
+    zh: '包住 server action 的 client component。action 做完後它會 reload 這頁，再列出兩個時間：隨 action 的回應送回來的那次 render，以及 reload 時 server 做的那次 render。',
   },
 }
