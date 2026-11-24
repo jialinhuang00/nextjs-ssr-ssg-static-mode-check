@@ -59,10 +59,27 @@ export function LocalTime() {
 }
 
 // Text with {rendered} filled in with the local render time once the page has loaded.
+// [words](href) in the text becomes a link on those words. Another site opens in a new tab:
+// inside the home page's iframe it would replace the page being read.
 export function Fill({ t }: { t: L }) {
   const iso = useRendered()
   const at = iso ? local(iso) : '…'
-  return <T t={{ en: t.en.split('{rendered}').join(at), zh: t.zh.split('{rendered}').join(at) }} />
+  const parts = (s: string) =>
+    s.split('{rendered}').join(at).split(/(\[[^\]]+\]\([^)]+\))/).map((part, i) => {
+      const m = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
+      if (!m) return part
+      return (
+        <a key={i} href={m[2]} target={m[2].startsWith('http') ? '_blank' : undefined} rel="noreferrer">
+          {m[1]}
+        </a>
+      )
+    })
+  return (
+    <>
+      <span data-l="en">{parts(t.en)}</span>
+      <span data-l="zh">{parts(t.zh)}</span>
+    </>
+  )
 }
 
 // Seconds since this HTML was rendered. For a static page it keeps growing from build time;

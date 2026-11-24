@@ -130,7 +130,8 @@ export function Stamp({
             {info.try && (
               <p>
                 {info.try.map((href) => (
-                  <a key={href} href={href} style={{ marginRight: 12 }}>
+                  // another site opens in a new tab: inside the home page's iframe it would replace this page
+                  <a key={href} href={href} target={href.startsWith("http") ? "_blank" : undefined} rel="noreferrer" style={{ marginRight: 12 }}>
                     {href}
                   </a>
                 ))}
@@ -169,15 +170,6 @@ export function Stamp({
       )}
     </main>
   );
-}
-
-// httpbin returns a new UUID on every call, so a repeated UUID means the fetch was cached.
-export async function fetchUuid(
-  init?: RequestInit & { next?: { revalidate?: number; tags?: string[] } },
-) {
-  const res = await fetch("https://httpbin.org/uuid", init);
-  const body = (await res.json()) as { uuid: string };
-  return body.uuid;
 }
 
 // The base file's own route string (route="/static") is swapped for this route's before

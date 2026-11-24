@@ -49,7 +49,9 @@ html:not([data-lang='zh']) [data-l='zh'] { display: none; }
 [data-kind='dynamic'] { --k: var(--dynamic); }
 
 .home {
-  height: 100vh; max-width: 1280px; margin: 0 auto; padding: 0 clamp(16px, 5vw, 64px) 12px;
+  /* 1080 = 200 sidebar + 16 gap + 736 pane + 2 x 64 padding. The page inside the iframe is drawn
+     at 80%, so 736 shows it 920 wide: the pane is as wide as the page, with no empty band beside it. */
+  height: 100vh; max-width: 1080px; margin: 0 auto; padding: 0 clamp(16px, 5vw, 64px) 12px;
   display: grid; grid-template-columns: 200px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 10px 16px;
 }
 /* Thick rule (4px) under the headline, kept to one line */
@@ -173,6 +175,8 @@ body:has(.stamp) { background: #fff; }
 .sym { text-transform: none; }
 /* pages shown inside the home iframe render at 80%; set by the script in layout.tsx */
 html.framed { zoom: .8; }
+/* inside the iframe the page fills the frame; the 900px limit is for a page opened on its own */
+html.framed .stamp { max-width: none; }
 
 /* /about: versions, the build time / run time diagram, where each page is made */
 .about { max-width: 1280px; margin: 0 auto; padding: 0 clamp(16px, 5vw, 64px) 48px; }

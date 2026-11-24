@@ -3,6 +3,7 @@ import type { L } from './i18n'
 // One entry per route. `expected` is what the Next 16 docs lead us to expect from
 // `next build` (previous caching model, no cacheComponents). `measured` is copied from a
 // real `next build` route table; see results/next-16.4.6-build.txt (all 18 matched).
+// Routes added after that build have `measured: null` until the next build table is saved.
 //   ○ Static   prerendered as HTML at build
 //   ● SSG      prerendered from generateStaticParams
 //   ƒ Dynamic  rendered on demand, per request
@@ -47,7 +48,7 @@ const FALLBACK_TABLE: Table = {
   rows: [
     ["fallback: false", '/ssg-strict/987654321', { en: '404', zh: '404' }],
     ["fallback: 'blocking'", '/ssg/987654321', { en: 'waits until the page is made, no loading screen', zh: '等頁面產生完才回應，不會出現 loading' }],
-    ['fallback: true', '/ssg-fallback/987654321', { en: 'here, even with loading.tsx, the first visit waits 2 s like blocking. Loading first and a stored page for everyone after needs both cacheComponents and partialPrefetching in next.config.ts; see the text above', zh: '這頁就算加了 loading.tsx，第一次打開還是等 2 秒，跟 blocking 一樣。要第一次先出現 loading、之後的人直接拿到存好的頁面，得在 next.config.ts 同時開 cacheComponents 和 partialPrefetching，見上面的說明' }],
+    ['fallback: true', '/ssg-fallback/987654321', { en: 'on the deployed site: waits 2 s like blocking, loading.tsx never shows', zh: '部署出去的網站上等 2 秒，跟 blocking 一樣，loading.tsx 不會出現' }],
   ],
 }
 
@@ -62,8 +63,8 @@ function fallbackUnlisted(id: string): RouteInfo {
     href: `/ssg-fallback/${id}`, base: `/ssg-fallback/${id}`, diffFrom: '/ssg', compare: '/ssg-fallback/1', hideExtras: id !== '987654321', expected: '●', measured: null, firstVisit: true, fresh: '/ssg-fallback/',
     factor: { en: `/ssg/[id] plus loading.tsx, id ${id}.`, zh: `/ssg/[id] 加上 loading.tsx，id 是 ${id}。` },
     test: {
-      en: 'First visit to an id: 2 s with nothing new on screen, then the page. After that the stored page comes back at once and the time does not change.\nThis folder has a loading.tsx, yet the deployed site never shows it: the server answers the first request only when the whole page is done, the same as /ssg/987654321. A link inside the site does not change that. Only next dev shows loading first.\nNo 2 s wait means someone opened this id before you. To see the wait yourself, use the link below: it goes to a random id nobody has opened.\n\nThe Pages Router\'s fallback: true means loading first on the first visit, then the finished page is stored for everyone after. The App Router gets both only with cacheComponents and partialPrefetching together in next.config.ts: cacheComponents stores the finished page, and partialPrefetching makes the server send the <Suspense> fallback (the loading screen) first. With cacheComponents alone, the result matches the Pages Router\'s fallback: \'blocking\'. This site turns on neither (it uses the previous caching model), so the first visit can only wait 2 s.\nA separate test build with both flags, run with next start, shows loading at 0.03 s and the page at 2.79 s on the first visit (its 2 s wait is a fetch to httpbin, so the round trip is in there too), and the stored page at 0.01 s on the second. Deployed to Cloudflare, though, loading on the first visit arrives only after about 1 s, and the second visit flashes loading and then shows "This page couldn’t load". The error message is "This promise was created by a request that has since ended". It could come from Next.js, from OpenNext (the adapter that runs Next.js on Cloudflare) or from the Workers runtime itself; which one is not known yet.',
-      zh: '第一次打開這個 id：畫面停 2 秒沒有變化，接著整頁出現。之後再 reload，server 直接回存好的頁面，時間不會再變。\n這個資料夾有 loading.tsx，但部署出去的網站不會顯示它：server 等整頁做完才回應第一個請求，跟 /ssg/987654321 一樣。從站內連結點進來也一樣。只有 next dev 會先出現 loading。\n如果沒有等那 2 秒，代表在你之前已經有人打開過這個 id。想自己看到那 2 秒，就點下面的連結，換到一個還沒人打開過的隨機 id。\n\nPages Router 的 fallback: true 是第一次打開先出現 loading，頁面做完之後存起來給之後的人用。App Router 要兩件事都有，得在 next.config.ts 同時開 cacheComponents 和 partialPrefetching。cacheComponents 讓做好的頁面存起來；partialPrefetching 讓 server 先把 <Suspense> 的 fallback，也就是 loading，送出去。如果只開 cacheComponents，效果等同 Pages Router 的 fallback: \'blocking\'。這個網站兩個都沒開，用的是舊的快取模式，所以第一次打開只能等 2 秒。\n我用這兩個設定另外做了一個測試版。用 next start 跑的時候，第一次打開 0.03 秒就出現 loading，2.79 秒出現頁面。這 2.79 秒裡，有 2 秒是在等 httpbin 回應，剩下的包括連到 httpbin 來回的網路時間。第二次打開 0.01 秒，server 直接回存好的頁面。但部署到 Cloudflare 之後，第一次打開要 1 秒多 loading 才出現；第二次打開會先閃一下 loading，接著顯示「This page couldn’t load」。錯誤訊息是 This promise was created by a request that has since ended。它可能來自 Next.js、來自 OpenNext（讓 Next.js 跑在 Cloudflare 上的 adapter），也可能是 Workers 執行環境本身的限制，目前還不知道是哪一個。',
+      en: "First visit to this id: the screen waits 2 s, then the whole page appears. After that a reload gets the stored page and the time does not change. No 2 s wait means someone opened this id before; 'open a new id' below goes to one nobody has opened.\n\nThis folder has a loading.tsx, which is the App Router's way to write the Pages Router's fallback: true, so by design loading shows first. What the first visit to an id outside generateStaticParams really does:\n· dev → loading first, replaced by the page 2 s later\n· prod →no loading; the whole page arrives after 2 s, like fallback: 'blocking' ([/ssg/987654321](/ssg/987654321))\n\nLoading first on the first visit needs cacheComponents and partialPrefetching in next.config.ts. A build with both turned on is deployed at [cc.nextmode.jialin00.com](https://cc.nextmode.jialin00.com/" + id + "), to compare with this page.",
+      zh: "第一次打開這個 id，畫面會停 2 秒，接著整頁出現。之後再 reload，server 直接回存好的頁面，時間不會再變。如果沒有等那 2 秒，代表已經有人打開過這個 id，點下面的「打開一個新的 id」可以換一個還沒人打開過的。\n\n這個資料夾有 loading.tsx，在 App Router 裡這是 Pages Router fallback: true 的寫法，照設計會先出現 loading。第一次打開 generateStaticParams 清單外的 id，實際的結果是：\n· dev → 先出現 loading，2 秒後換成頁面\n· prod →沒有 loading，等 2 秒後整頁一起出現，跟 fallback: 'blocking'（[/ssg/987654321](/ssg/987654321)）一樣\n\n如果要第一次打開就先出現 loading，next.config.ts 得開 cacheComponents 跟 partialPrefetching。開了這兩個設定的版本部署在 [cc.nextmode.jialin00.com](https://cc.nextmode.jialin00.com/" + id + ")，可以打開來跟這頁比較。",
     },
     table: FALLBACK_TABLE,
   }
@@ -143,8 +144,8 @@ export const ROUTES: RouteInfo[] = [
     href: '/force-dynamic', base: '/force-dynamic', diffFrom: '/static', expected: 'ƒ', measured: 'ƒ',
     factor: { en: "Same as /static, plus export const dynamic = 'force-dynamic'.", zh: "跟 /static 一樣，再加上 export const dynamic = 'force-dynamic'。" },
     test: {
-      en: 'New every time. This page could be made at build; force-dynamic makes it render on every request instead.',
-      zh: '每次都是新的。這頁本來可以 build 時就做好，force-dynamic 硬把它改成每次 request 都重新產生。',
+      en: "The time changes on every reload.\nWithout export const dynamic = 'force-dynamic', this page would be Static.",
+      zh: "每次 reload，時間都會換。\n不加上 export const dynamic = 'force-dynamic'，他就會歸類在 static。",
     },
   },
   {
@@ -152,32 +153,44 @@ export const ROUTES: RouteInfo[] = [
     href: '/force-dynamic-loading', base: '/force-dynamic-loading', diffFrom: '/force-dynamic', compare: '/ssg-fallback/987654321', expected: 'ƒ', measured: null,
     factor: { en: '/force-dynamic plus a 2 s wait and loading.tsx.', zh: '/force-dynamic 加上等 2 秒跟 loading.tsx。' },
     test: {
-      en: 'Every visit: the loading screen first, replaced by the page 2 s later. On the deployed site the loading screen arrives at 0.4 s and the page at 2.3 s.\nCompare /ssg-fallback/987654321: the same loading.tsx and the same 2 s wait. The difference is that that page is stored after its first visit for everyone after, while this one is made again on every request and never stored. On its first visit the server waits 2 s and sends the whole page at once, with no loading screen.',
-      zh: '每次打開：先出現 loading 畫面，2 秒後 loading 換成頁面。在部署出去的網站上，loading 0.4 秒就送到，頁面 2.3 秒才送到。\n對照 /ssg-fallback/987654321：loading.tsx 一樣，也一樣等 2 秒。不過那頁第一次打開之後會存起來給之後的人用，這頁每次都當場重做、不存。那頁第一次打開時，server 等 2 秒後才把整頁一起送出，不會出現 loading。',
+      en: 'Every visit shows loading first, replaced by the page 2 s later.\n/ssg-fallback/987654321 also has a loading.tsx and a 2 s wait, but on prod its first visit does not show loading first. The table has the first visit of both pages.',
+      zh: '每次打開都先出現 loading，2 秒後換成頁面。\n/ssg-fallback/987654321 也有 loading.tsx、也要等 2 秒，但它在 prod 第一次打開時不會先出現 loading。下表是兩頁第一次打開的結果。',
+    },
+    table: {
+      head: [
+        { en: 'Page', zh: '頁面' },
+        { en: 'First visit, dev', zh: 'dev 第一次打開' },
+        { en: 'First visit, prod', zh: 'prod 第一次打開' },
+        { en: 'Page stored afterwards', zh: '頁面之後會不會存起來' },
+      ],
+      rows: [
+        ['/ssg-fallback/987654321', { en: 'loading', zh: '有 loading' }, { en: 'no loading', zh: '沒有 loading' }, { en: 'yes', zh: '會' }],
+        ['/force-dynamic-loading', { en: 'loading', zh: '有 loading' }, { en: 'loading', zh: '有 loading' }, { en: 'no, rendered again on every request', zh: '不會，每次 request 都重新 render' }],
+      ],
     },
   },
   {
     href: '/force-static-cookies', base: '/force-static-cookies', diffFrom: '/cookies', expected: '○', measured: '○',
     factor: { en: "Reads cookies(), plus export const dynamic = 'force-static'.", zh: "讀了 cookies()，再加上 export const dynamic = 'force-static'。" },
     test: {
-      en: "force-static renders this page at build. There is no request at build, so there is no Cookie header: cookies() reads nothing and 'cookies seen' is always 0. Everyone gets that copy afterwards.",
-      zh: 'force-static 讓這頁在 build 時 render。build 時沒有 request，也就沒有 Cookie header，所以 cookies() 讀到空的，cookies seen 永遠是 0。之後每個人拿到的都是這一份。',
+      en: "force-static renders this page at build. There is no request at build, so there is no Cookie header: cookies() returns an empty list and the HTML is written with 'cookies seen: 0'.\nPress the button below: the browser stores one more cookie and reloads. The count here stays 0, because the server answers with the HTML made at build and does not run cookies() again. Open /cookies after that: the browser sends the new cookie along, and the count on that page goes up by 1.",
+      zh: 'force-static 讓這頁在 build 時 render。build 時沒有 request，也就沒有 Cookie header，所以 cookies() 拿到的是空的，HTML 裡寫的就是 cookies seen: 0。\n按下面的按鈕，瀏覽器會多存一個 cookie 再 reload。這頁的數字還是 0，因為 server 回的是 build 時做好的那份 HTML，沒有再執行一次 cookies()。這時候再打開 /cookies，瀏覽器會把剛存的 cookie 一起送過去，那頁的 cookies seen 就會多 1。',
     },
   },
   {
     href: '/cookies', base: '/cookies', diffFrom: '/static', compare: '/force-static-cookies', expected: 'ƒ', measured: 'ƒ',
     factor: { en: 'Reads cookies().', zh: '讀了 cookies()。' },
     test: {
-      en: "New every time. The browser puts its cookies in the Cookie header of every request, and cookies() reads that header on the server. So this page can only render once a request arrives. 'cookies seen' counts the cookies in that header.",
-      zh: '每次都是新的。瀏覽器每次 request 都會把 cookie 放進 Cookie header，server 執行 cookies() 時讀這個 header，所以這頁要等 request 進來才能 render。cookies seen 算的是這個 header 裡有幾個 cookie。',
+      en: "New every time. The browser puts its cookies in the Cookie header of every request, and cookies() reads that header on the server. So this page can only render once a request arrives. 'cookies seen' counts the cookies in that header.\nPress the button below: the browser stores a cookie named demo-… with document.cookie and reloads, and the count goes up by 1. /force-static-cookies has the same button, and there the count stays 0.",
+      zh: '每次都是新的。瀏覽器每次 request 都會把 cookie 放進 Cookie header，server 執行 cookies() 時讀這個 header，所以這頁要等 request 進來才能 render。cookies seen 算的是這個 header 裡有幾個 cookie。\n按下面的按鈕，瀏覽器會用 document.cookie 存一個 demo- 開頭的 cookie 再 reload，cookies seen 就多 1。/force-static-cookies 有同一顆按鈕，但那邊的數字會停在 0。',
     },
   },
   {
     href: '/search-params?q=hi', base: '/search-params', diffFrom: '/static', expected: 'ƒ', measured: 'ƒ', try: ['/search-params?q=bye'],
     factor: { en: 'Reads searchParams.', zh: '讀了 searchParams。' },
     test: {
-      en: 'New every time; change ?q= and the page changes with it.',
-      zh: '每次都是新的，改 ?q= 頁面跟著變',
+      en: "The time changes on every reload, even when ?q= stays the same.\nThis page reads searchParams and shows the value of ?q= under 'data'. That value is only known once a request arrives, and at build there is no URL to read, so this page is ƒ Dynamic and renders again on every request.",
+      zh: '每次 reload，時間都會換，就算 ?q= 沒改也一樣。\n這頁讀了 searchParams，把 ?q= 的值顯示在「資料」那一欄。?q= 的值要等 request 進來才知道，build 時沒有 URL 可以讀，所以這頁是 ƒ Dynamic，每次 request 都重新 render。',
     },
   },
   {
@@ -192,8 +205,18 @@ export const ROUTES: RouteInfo[] = [
     href: '/fetch-default', base: '/fetch-default', diffFrom: '/static', expected: '○', measured: '○',
     factor: { en: 'fetch() with no cache option.', zh: 'fetch() 沒有設定 cache。' },
     test: {
-      en: 'Time and uuid stay at build. fetch is not cached by default since Next 15, but nothing in this page needs the request, so the whole page, fetch result included, is made once at build.',
-      zh: '時間跟 uuid 都停在 build。Next 15 之後 fetch 預設不快取，可是這頁沒有東西需要用到請求，所以整頁連同 fetch 的結果，都在 build 時做一次就好。',
+      en: "Time and uuid stay at build. fetch is not cached by default since Next 15, but this page uses no API that needs a request (such as cookies()), so it is still Static: the fetch ran once, in Node.js, during next build, and its result is written into the HTML.\nfetch() is the Web API, built into Node.js, so there is no import. On the server Next adds two options to it: cache and next.revalidate.\nAdding cache: 'force-cache' gives the same result: see /fetch-force-cache.",
+      zh: "時間跟 uuid 都停在 build。Next 15 之後 fetch 預設不快取，但這頁沒有用到 cookies() 這類要等 request 的 API，所以還是 Static：fetch 只在 next build 時由 Node.js 執行一次，結果寫進 HTML。\nfetch() 是 Web API。Node.js 本身就內建 fetch()，所以 page.tsx 不用 import 它。Next 在 server 上替它加了 cache 跟 next.revalidate 這兩個 option。\n加上 cache: 'force-cache' 結果也一樣，見 /fetch-force-cache。",
+    },
+  },
+  {
+    // Added after results/next-16.4.6-build-2026-11-22.txt, so not in a build table yet. The
+    // uuid behaviour was checked on next dev only (2026-11-24, three requests in a row).
+    href: '/connection-fetch', base: '/connection-fetch', diffFrom: '/connection', compare: '/fetch-force-cache', expected: 'ƒ', measured: null,
+    factor: { en: "/connection plus two fetches: one with no cache option, one with cache: 'force-cache'.", zh: "/connection 加上兩個 fetch：一個沒有設定 cache，一個設定 cache: 'force-cache'。" },
+    test: {
+      en: 'connection() makes this page render on every request, so both fetches run every time. Press reload: the table lists the uuid each fetch got on the previous load and on this one.',
+      zh: 'connection() 讓這頁每次 request 都重新 render，所以兩個 fetch 每次都會執行。按 reload，下表會列出兩個 fetch 上一次跟這一次拿到的 uuid。',
     },
   },
   {
@@ -208,8 +231,8 @@ export const ROUTES: RouteInfo[] = [
     href: '/fetch-force-cache', base: '/fetch-force-cache', diffFrom: '/fetch-default', expected: '○', measured: '○',
     factor: { en: "fetch() with cache: 'force-cache'.", zh: "fetch() 設定 cache: 'force-cache'。" },
     test: {
-      en: 'Time and uuid stay at build. The response goes into the data cache and the page is static.',
-      zh: "時間跟 uuid 都停在 build。cache: 'force-cache' 讓這次 fetch 的回應存進 Next 的資料快取（data cache），因為資料可以重用，整頁也就在 build 時產生一次。",
+      en: "Time and uuid stay at build, the same as /fetch-default. This page is Static and never renders again after build, so the result is the same with or without cache: 'force-cache'.\nforce-cache only has an effect on a page that renders again: see /connection-fetch.",
+      zh: "時間跟 uuid 都停在 build，跟 /fetch-default 一樣。這頁是 Static，build 之後不會再 render，所以有沒有 cache: 'force-cache' 結果都相同。\nforce-cache 在會重新 render 的頁面才有作用，見 /connection-fetch。",
     },
   },
   {

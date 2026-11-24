@@ -46,7 +46,7 @@ const WHERE: { pages: string[]; made: Cell; kept: Cell }[] = [
     kept: { en: 'R2', zh: 'R2' },
   },
   {
-    pages: ['/force-dynamic', '/dynamic-segment/1', '/cookies', '/search-params', '/connection', '/fetch-no-store', '/api/get', '/api/post'],
+    pages: ['/force-dynamic', '/dynamic-segment/1', '/cookies', '/search-params', '/connection', '/connection-fetch', '/fetch-no-store', '/api/get', '/api/post'],
     made: { en: 'Worker, on every request', zh: 'Worker, on every request' },
     kept: { en: '—', zh: '—' },
   },

@@ -35,6 +35,17 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       <Suspense fallback={<h1>loading…</h1>}>
         <Item params={params} />
       </Suspense>
+      {/* Outside <Suspense>, so it is in the first bytes together with the fallback. */}
+      <p>
+        First visit to an id: &quot;loading…&quot; shows first, then the page, the same as the Pages Router&apos;s fallback: true.
+        <br />
+        第一次打開一個 id，會先出現 loading…，接著才是頁面，效果跟 Pages Router 的 fallback: true 一樣。
+      </p>
+      <p style={{ color: '#b91c1c', fontWeight: 700 }}>
+        Reload and this page breaks: only &quot;loading…&quot; arrives, then &quot;This page couldn&apos;t load&quot;. It happens on this Cloudflare deployment (OpenNext), not with next start.
+        <br />
+        再 reload 這頁會壞掉，瀏覽器只收到 loading…，接著顯示「This page couldn&apos;t load」。這只發生在這個用 OpenNext 部署到 Cloudflare 的版本，用 next start 跑不會。
+      </p>
     </main>
   )
 }
