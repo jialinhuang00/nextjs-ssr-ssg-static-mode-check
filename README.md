@@ -41,7 +41,7 @@ The home page lists every route with its page source, the diff against a neighbo
 | Worker | `nextjs-modes` | `nextjs-modes-cc` |
 | Domain | nextmode.jialin00.com | cc.nextmode.jialin00.com |
 
-Known problem in `cc/` on Workers: the second visit to an id outside `generateStaticParams` returns only the fallback. See `results/cc-stream-timing-2026-11-24.txt`. The same code run locally with `next start` serves the stored page on the second visit (`results/cc-stream-timing-2026-11-22.txt`).
+Known problem in `cc/` on Workers: the second visit to an id outside `generateStaticParams` returns only the fallback. The same code run locally with `next start` serves the stored page on the second visit. Both are in `results/cc-stream-timing-2026-11-24.txt`.
 
 ## Run
 
@@ -63,6 +63,7 @@ pnpm run deploy # OpenNext build + deploy to Cloudflare Workers
 | --- | --- | --- |
 | A route is ○ / ● / ƒ | the route table printed by `next build` | `results/next-16.4.6-build-*.txt` |
 | A fallback is streamed before the page | `python3 -I bench/stream-timing.py <origin> [prefix]`: arrival time of each chunk, first and second visit to a fresh id | `results/cc-stream-timing-*.txt` |
+| An ISR page is replaced after its 30 s | `python3 -I bench/isr-probe.py <origin> <path> <seconds...>`: rendered time and `x-nextjs-cache` of a request at each offset | `results/isr-probe-*.txt` |
 | What the browser paints | `bench/browser-probes.js`, pasted into DevTools on the deployed site | |
 | Cookies, `?q=`, fetch caching | the buttons and the uuid table on each page | |
 

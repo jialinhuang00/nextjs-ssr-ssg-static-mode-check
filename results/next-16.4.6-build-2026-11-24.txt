@@ -1,0 +1,47 @@
+Route (app)                  Revalidate  Expire
+┌ ○ /
+├ ○ /_not-found
+├ ○ /about
+├ ƒ /api/get
+├ ○ /api/get-force-static
+├ ƒ /api/post
+├ ƒ /connection
+├ ƒ /connection-fetch
+├ ƒ /cookies
+├ ƒ /dynamic-segment/[id]
+├ ○ /fetch-default
+├ ○ /fetch-force-cache
+├ ƒ /fetch-no-store
+├ ○ /fetch-revalidate               30s      1y
+├ ƒ /force-dynamic
+├ ƒ /force-dynamic-loading
+├ ○ /force-static-cookies
+├ ○ /isr                            30s      1y
+├ ○ /isr-on-demand
+├ ○ /rsc
+├   /rsc/demo/[lang]/client
+│ ├ ● /rsc/demo/en/client
+│ └ ● /rsc/demo/zh/client
+├   /rsc/demo/[lang]/server
+│ ├ ● /rsc/demo/en/server
+│ └ ● /rsc/demo/zh/server
+├ ƒ /search-params
+├   /ssg-fallback/[id]
+│ ├ ● /ssg-fallback/1
+│ ├ ● /ssg-fallback/2
+│ └ ● /ssg-fallback/3
+├   /ssg-strict/[id]
+│ ├ ● /ssg-strict/1
+│ ├ ● /ssg-strict/2
+│ └ ● /ssg-strict/3
+├   /ssg/[id]
+│ ├ ● /ssg/1
+│ ├ ● /ssg/2
+│ └ ● /ssg/3
+├ ○ /static
+└ ○ /use-client
+
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand

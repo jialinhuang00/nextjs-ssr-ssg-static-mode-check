@@ -2,7 +2,7 @@ import type { L } from './i18n'
 
 // One entry per route. `expected` is what the Next 16 docs lead us to expect from
 // `next build` (previous caching model, no cacheComponents). `measured` is copied from a
-// real `next build` route table; see results/next-16.4.6-build.txt (all 18 matched).
+// real `next build` route table; the newest is results/next-16.4.6-build-2026-11-24.txt.
 // Routes added after that build have `measured: null` until the next build table is saved.
 //   ○ Static   prerendered as HTML at build
 //   ● SSG      prerendered from generateStaticParams
@@ -149,8 +149,7 @@ export const ROUTES: RouteInfo[] = [
     },
   },
   {
-    // Not in results/next-16.4.6-build-2026-11-22.txt (added after that build), so not measured yet.
-    href: '/force-dynamic-loading', base: '/force-dynamic-loading', diffFrom: '/force-dynamic', compare: '/ssg-fallback/987654321', expected: 'ƒ', measured: null,
+    href: '/force-dynamic-loading', base: '/force-dynamic-loading', diffFrom: '/force-dynamic', compare: '/ssg-fallback/987654321', expected: 'ƒ', measured: 'ƒ',
     factor: { en: '/force-dynamic plus a 2 s wait and loading.tsx.', zh: '/force-dynamic 加上等 2 秒跟 loading.tsx。' },
     test: {
       en: 'Every visit shows loading first, replaced by the page 2 s later.\n/ssg-fallback/987654321 also has a loading.tsx and a 2 s wait, but on prod its first visit does not show loading first. The table has the first visit of both pages.',
@@ -210,9 +209,8 @@ export const ROUTES: RouteInfo[] = [
     },
   },
   {
-    // Added after results/next-16.4.6-build-2026-11-22.txt, so not in a build table yet. The
-    // uuid behaviour was checked on next dev only (2026-11-24, three requests in a row).
-    href: '/connection-fetch', base: '/connection-fetch', diffFrom: '/connection', compare: '/fetch-force-cache', expected: 'ƒ', measured: null,
+    // The uuid behaviour was checked on next dev and on the deployed site (2026-11-24).
+    href: '/connection-fetch', base: '/connection-fetch', diffFrom: '/connection', compare: '/fetch-force-cache', expected: 'ƒ', measured: 'ƒ',
     factor: { en: "/connection plus two fetches: one with no cache option, one with cache: 'force-cache'.", zh: "/connection 加上兩個 fetch：一個沒有設定 cache，一個設定 cache: 'force-cache'。" },
     test: {
       en: 'connection() makes this page render on every request, so both fetches run every time. Press reload: the table lists the uuid each fetch got on the previous load and on this one.',

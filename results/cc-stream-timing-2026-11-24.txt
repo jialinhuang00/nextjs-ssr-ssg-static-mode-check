@@ -46,3 +46,21 @@ visit 2: https://cc.nextmode.jialin00.com/756726408 -> 200
 #   Error: This promise was created by a request that has since ended, so it can never settle.
 #   Error: The Workers runtime canceled this request because it detected that your Worker's
 #   code had hung and would never generate a response.
+
+## next start (localhost:3201), 2026-11-24T14:19Z
+# cc/.next BUILD_ID Rdq3vCN4zbybM7R1FWfgX, built 12:52 local by the same opennextjs-cloudflare
+# build that was deployed; required-server-files.json has "disableResumeDataCacheCompression": true.
+$ python3 -I bench/stream-timing.py http://localhost:3201 /
+visit 1: http://localhost:3201/923016198 -> 200
+    0.05s   2045 bytes loading=True rendered=False
+    0.09s   5802 bytes loading=True rendered=False
+    2.80s    247 bytes loading=False rendered=True
+    2.81s     73 bytes loading=False rendered=False
+    2.81s    989 bytes loading=False rendered=True
+    2.83s   5701 bytes loading=True rendered=True
+    2.83s     14 bytes loading=False rendered=False
+  rendered at: 2026-11-24T14:19:41.000Z
+visit 2: http://localhost:3201/923016198 -> 200
+    0.02s   8376 bytes loading=True rendered=True
+  rendered at: 2026-11-24T14:19:41.000Z
+# visit 2: same rendered time, whole page in one chunk. Same result as 2026-11-22.

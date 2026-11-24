@@ -1,0 +1,23 @@
+# Deployed site (Cloudflare Worker), measured 2026-11-24 with bench/isr-probe.py.
+# Both pages have revalidate = 30. Columns: offset from the first request, clock (UTC), the
+# rendered time printed in the page, the first 8 characters of the uuid in the page (if any),
+# and the x-nextjs-cache response header.
+
+$ python3 -I bench/isr-probe.py https://nextmode.jialin00.com /isr 0 3 8 40 45 50
+t+   0s  at 14:17:03Z  rendered 2026-11-24T09:22:47.344Z  uuid -  x-nextjs-cache STALE
+t+   3s  at 14:17:05Z  rendered 2026-11-24T14:17:04.109Z  uuid -  x-nextjs-cache HIT
+t+   8s  at 14:17:09Z  rendered 2026-11-24T14:17:04.109Z  uuid -  x-nextjs-cache HIT
+t+  40s  at 14:17:41Z  rendered 2026-11-24T14:17:04.109Z  uuid -  x-nextjs-cache STALE
+t+  45s  at 14:17:47Z  rendered 2026-11-24T14:17:42.233Z  uuid -  x-nextjs-cache HIT
+t+  50s  at 14:17:51Z  rendered 2026-11-24T14:17:42.233Z  uuid -  x-nextjs-cache HIT
+
+$ python3 -I bench/isr-probe.py https://nextmode.jialin00.com /fetch-revalidate 0 3 8 40 45 50
+t+   0s  at 14:17:52Z  rendered 2026-11-24T09:22:48.118Z  uuid a36646a1  x-nextjs-cache STALE
+t+   3s  at 14:17:55Z  rendered 2026-11-24T14:17:54.213Z  uuid 42d6bff7  x-nextjs-cache HIT
+t+   8s  at 14:18:00Z  rendered 2026-11-24T14:17:54.213Z  uuid 42d6bff7  x-nextjs-cache HIT
+t+  40s  at 14:18:32Z  rendered 2026-11-24T14:17:54.213Z  uuid 42d6bff7  x-nextjs-cache STALE
+t+  45s  at 14:18:37Z  rendered 2026-11-24T14:18:33.437Z  uuid f069f13c  x-nextjs-cache HIT
+t+  50s  at 14:18:42Z  rendered 2026-11-24T14:18:33.437Z  uuid f069f13c  x-nextjs-cache HIT
+
+# A request after the 30 s gets the old page (STALE) and starts a new render; the request after
+# that gets the new page (HIT). The page is replaced in the background, not while a reader waits.
