@@ -1,0 +1,55 @@
+# cc/ on the Cloudflare Worker (version d99b715f-14b2-4bcd-87bd-672a9dffc287), 2026-11-24.
+# Three fresh ids, each visited once at the start and once more after its wait.
+# Columns: clock (UTC), which visit, path, status, total time, bytes, the rendered time in the
+# page, whether the stream marked a Suspense boundary as errored ($RX), cf-ray.
+
+$ python3 -I bench/cc-second-visit-wait.py https://cc.nextmode.jialin00.com 300 1800 7200
+2026-11-24T14:26:56Z  visit 1 (wait 300s)    /454095230   200   3.30s   14242 bytes  rendered 2026-11-24T14:26:56.071Z  errored False  cf-ray a5f91758cf2863b4-TPE
+2026-11-24T14:26:58Z  visit 1 (wait 1800s)   /926550570   200   2.87s   14242 bytes  rendered 2026-11-24T14:26:58.957Z  errored False  cf-ray a5f9176d2e80de4d-TPE
+2026-11-24T14:27:01Z  visit 1 (wait 7200s)   /677820704   200   3.02s   14242 bytes  rendered 2026-11-24T14:27:01.954Z  errored False  cf-ray a5f9177f29097d52-TPE
+2026-11-24T14:31:55Z  visit 2 after 300s     /454095230   200   2.95s   14242 bytes  rendered 2026-11-24T14:31:55.734Z  errored False  cf-ray a5f91eab8b63ca04-TPE
+2026-11-24T14:56:56Z  visit 2 after 1800s    /926550570   200   3.69s   14242 bytes  rendered 2026-11-24T14:56:56.434Z  errored False  cf-ray a5f9434b1dec12bf-TPE
+2026-11-24T16:26:56Z  visit 2 after 7200s    /677820704   200   3.46s   14242 bytes  rendered 2026-11-24T16:26:56.250Z  errored False  cf-ray a5f9c7218de4ca74-TPE
+
+# All three second visits have content and no errored boundary. All three took about 3 s and
+# carry a new rendered time, so the page was made again, not served from a stored copy.
+# Compare results/cc-stream-timing-2026-11-24.txt: a second visit a few seconds after the first
+# ends at 0.25 s with the fallback only.
+# Every request reaches the Worker, so the 7200 s id saw a Worker last used 5400 s earlier.
+
+## Shorter waits, same Worker version, 18:21Z to 18:24Z
+
+$ python3 -I bench/cc-second-visit-wait.py https://cc.nextmode.jialin00.com 10 30 60 120
+2026-11-24T18:21:33Z  visit 1 (wait 10s)     /448239061   200   3.34s   14242 bytes  rendered 2026-11-24T18:21:33.685Z  errored False  cf-ray a5fa6f0a887e2428-TPE
+2026-11-24T18:21:36Z  visit 1 (wait 30s)     /694509134   200   3.23s   14242 bytes  rendered 2026-11-24T18:21:36.903Z  errored False  cf-ray a5fa6f1e3a138f00-TPE
+2026-11-24T18:21:39Z  visit 1 (wait 60s)     /807507483   200   2.56s   14242 bytes  rendered 2026-11-24T18:21:39.389Z  errored False  cf-ray a5fa6f325c1ac1e8-TPE
+2026-11-24T18:21:42Z  visit 1 (wait 120s)    /520887745   200   3.14s   14242 bytes  rendered 2026-11-24T18:21:42.613Z  errored False  cf-ray a5fa6f4289385d14-TPE
+2026-11-24T18:21:45Z  visit 2 after 10s      /448239061   200   2.86s   14242 bytes  rendered 2026-11-24T18:21:45.503Z  errored False  cf-ray a5fa6f562f13665f-TPE
+2026-11-24T18:22:03Z  visit 2 after 30s      /694509134   200   2.90s   14242 bytes  rendered 2026-11-24T18:22:03.176Z  errored False  cf-ray a5fa6fc4fa3eaa6e-TPE
+2026-11-24T18:22:33Z  visit 2 after 60s      /807507483   200   3.00s   14242 bytes  rendered 2026-11-24T18:22:33.321Z  errored False  cf-ray a5fa7080d98aff37-TPE
+2026-11-24T18:23:33Z  visit 2 after 120s     /520887745   200   3.00s   14242 bytes  rendered 2026-11-24T18:23:33.294Z  errored False  cf-ray a5fa71f778504a9d-TPE
+
+# The second visit straight after the first (bench/stream-timing.py, 18:23:42Z, id 154031814)
+# failed again: ended at 0.22 s, fallback only, boundary errored.
+
+$ python3 -I bench/cc-second-visit-wait.py https://cc.nextmode.jialin00.com 0 1 2 4 6
+2026-11-24T18:23:45Z  visit 1 (wait 0s)      /34740260    200   2.59s   14237 bytes  rendered 2026-11-24T18:23:45.358Z  errored False  cf-ray a5fa72458b648098-TPE
+2026-11-24T18:23:48Z  visit 1 (wait 1s)      /889891468   200   2.87s   14242 bytes  rendered 2026-11-24T18:23:48.257Z  errored False  cf-ray a5fa7255badd7e74-TPE
+2026-11-24T18:23:52Z  visit 1 (wait 2s)      /603549942   200   3.91s   14242 bytes  rendered 2026-11-24T18:23:52.228Z  errored False  cf-ray a5fa726ddc151ca0-TPE
+2026-11-24T18:23:55Z  visit 1 (wait 4s)      /525283306   200   2.86s   14242 bytes  rendered 2026-11-24T18:23:55.091Z  errored False  cf-ray a5fa728008509bfe-TPE
+2026-11-24T18:23:57Z  visit 1 (wait 6s)      /420023335   200   2.82s   14242 bytes  rendered 2026-11-24T18:23:57.902Z  errored False  cf-ray a5fa7291edb2842e-TPE
+2026-11-24T18:24:00Z  visit 2 after 0s       /34740260    200   2.82s   14237 bytes  rendered 2026-11-24T18:24:00.735Z  errored False  cf-ray a5fa72a39e2b28e9-TPE
+2026-11-24T18:24:03Z  visit 2 after 1s       /889891468   200   2.53s   14242 bytes  rendered 2026-11-24T18:24:03.189Z  errored False  cf-ray a5fa72b53d711285-TPE
+2026-11-24T18:24:03Z  visit 2 after 2s       /603549942   200   0.20s    8266 bytes  rendered (none)  errored True  cf-ray a5fa72c4fa17ff3a-TPE
+2026-11-24T18:24:06Z  visit 2 after 4s       /525283306   200   2.86s   14242 bytes  rendered 2026-11-24T18:24:06.318Z  errored False  cf-ray a5fa72c63c184a01-TPE
+2026-11-24T18:24:09Z  visit 2 after 6s       /420023335   200   2.91s   14242 bytes  rendered 2026-11-24T18:24:09.226Z  errored False  cf-ray a5fa72d82d4b1a28-TPE
+
+# In this last run the labels are not the real gaps: the five first visits run one after another
+# and take 15 s together, so every second visit came 8 to 13 s after its first. Of the five, one
+# failed (/603549942, about 11 s after its first visit); the ids at about 8, 8, 12 and 13 s were
+# made again and returned content.
+#
+# Summary of the day: a second visit straight after the first failed every time it was tried.
+# From 8 s on, 11 of 12 second visits returned content, each made again in about 3 s with a new
+# rendered time; one at about 11 s failed. No second visit on the Worker returned the stored
+# page. What decides between "fails" and "made again" is not established.
