@@ -50,8 +50,10 @@ def visit(n):
         print(f"  {time.time() - t0:6.2f}s {len(b):6d} bytes loading={'loading…' in s} rendered={'data-rendered' in s}")
     m = re.search(r'data-rendered[^>]*>([^<]+)<', body)
     print(f"  rendered at: {m.group(1) if m else '(none)'}")
-    if "couldn" in body or r.status >= 500:
-        print("  error page in the response")
+    # $RX("B:0", ...) is the call React emits to mark a Suspense boundary as errored. Not the
+    # words "couldn't load": the cc/ page now prints those words itself, in its warning.
+    if '$RX("' in body or r.status >= 500:
+        print("  a Suspense boundary errored (or 5xx)")
 
 
 visit(1)

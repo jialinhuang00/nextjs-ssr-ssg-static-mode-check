@@ -1,49 +1,85 @@
-# Note
+# Next.js rendering modes explorer
 
-The purpose of this project is to understand what factors Next.js uses to generate different types of pages, including SSG (Static Site Generation), SSR (Server-Side Rendering), and static pages.
+Which line of code makes a Next.js page Static, SSG, ISR or Dynamic? Each route here changes one thing, and the page shows what that changed.
 
-# Result
+- Site: https://nextmode.jialin00.com
+- Cache Components version of one route: https://cc.nextmode.jialin00.com/987654321
+
+Next.js 16.4.6, App Router, deployed to Cloudflare Workers with OpenNext.
+
+## What each page shows
+
+Every page prints the time it was rendered. Reload and watch the time:
+
+| Time on reload | The page is |
+| --- | --- |
+| stays the same | ○ Static or ● SSG, made at build (or at the first visit to that id) |
+| changes after N seconds | ISR |
+| changes every time | ƒ Dynamic, rendered per request |
+
+The home page lists every route with its page source, the diff against a neighbouring route, and what to do to see the difference (reload, add a cookie, change `?q=`).
+
+| Group | Routes |
+| --- | --- |
+| No request data | `/static`, `/use-client` |
+| `generateStaticParams` | `/ssg/[id]`, `/ssg-fallback/[id]`, `/ssg-strict/[id]`, `/dynamic-segment/[id]` |
+| `export const dynamic` | `/force-dynamic`, `/force-dynamic-loading`, `/force-static-cookies` |
+| Request-time APIs | `/cookies`, `/search-params`, `/connection` |
+| `fetch` options | `/fetch-default`, `/fetch-force-cache`, `/fetch-no-store`, `/fetch-revalidate`, `/connection-fetch` |
+| ISR | `/isr`, `/isr-on-demand` |
+| Route handlers | `/api/get`, `/api/get-force-static`, `/api/post` |
+
+`/rsc` explains Server and Client Components. `/about` lists the pages by mode.
+
+## Two apps
+
+| | Root | `cc/` |
+| --- | --- | --- |
+| Caching model | previous (no `cacheComponents`) | `cacheComponents` + `partialPrefetching` |
+| Why | `dynamic`, `revalidate`, `dynamicParams` only work here | the only way to get the fallback first for an unlisted id |
+| Routes | all of the above | `/[id]` |
+| Worker | `nextjs-modes` | `nextjs-modes-cc` |
+| Domain | nextmode.jialin00.com | cc.nextmode.jialin00.com |
+
+Known problem in `cc/` on Workers: the second visit to an id outside `generateStaticParams` returns only the fallback. See `results/cc-stream-timing-2026-11-24.txt`. The same code run locally with `next start` serves the stored page on the second visit (`results/cc-stream-timing-2026-11-22.txt`).
+
+## Run
 
 ```bash
- ✓ Creating an optimized production build
- ✓ Compiled successfully
- ✓ Linting and checking validity of types
- ✓ Collecting page data
- ✓ Generating static pages (19/19)
- ✓ Collecting build traces
- ✓ Finalizing page optimization
-
-Route (app)                                         Size     First Load JS
-┌ λ /                                               158 B          80.5 kB
-├ ○ /_not-found                                     882 B          81.2 kB
-├ λ /api/ssr-post-method-only                       0 B                0 B
-├ ○ /api/static-get-only                            0 B                0 B
-├ ○ /navigation-type                                185 B          87.5 kB
-├ ○ /navigation-type/client-side-about              184 B          87.5 kB
-├ ○ /navigation-type/client-side-no-prefetch-about  184 B          87.5 kB
-├ ○ /navigation-type/traditional-navigation-about   158 B          80.5 kB
-├ ○ /ssg-comments                                   158 B          80.5 kB
-├ ● /ssg-comments/[commentId]                       158 B          80.5 kB
-├   ├ /ssg-comments/16
-├   ├ /ssg-comments/17
-├   ├ /ssg-comments/18
-├   └ [+2 more paths]
-├ ○ /ssg-no-spec-generating-comments                158 B          80.5 kB
-├ ● /ssg-no-spec-generating-comments/[commentId]    158 B          80.5 kB
-├ ○ /ssr-users                                      184 B          87.5 kB
-└ λ /ssr-users/[userId]                             158 B          80.5 kB
-+ First Load JS shared by all                       80.3 kB
-  ├ chunks/472-23f435a9c16afa13.js                  27.5 kB
-  ├ chunks/fd9d1056-e4950b334bc218cf.js             50.9 kB
-  ├ chunks/main-app-b81a62f80b3e9d35.js             230 B
-  └ chunks/webpack-bfe13959c70bd239.js              1.69 kB
-
-
-λ  (Server)  server-side renders at runtime (uses getInitialProps or getServerSideProps)
-○  (Static)  automatically rendered as static HTML (uses no initial props)
-●  (SSG)     automatically generated as static HTML + JSON (uses getStaticProps)
+pnpm install
+pnpm dev        # next dev
+pnpm build      # next build, prints the route table
+pnpm start      # next start, production behaviour locally
+pnpm run deploy # OpenNext build + deploy to Cloudflare Workers
 ```
 
-# Inspiration
+`cc/` has its own `package.json` and lockfile; run the same commands inside it (dev on 3101, start on 3201).
+
+`next dev` renders every page on every request, so Static, SSG and ISR all look Dynamic there. Check modes with `pnpm build` + `pnpm start`, or on the deployed site.
+
+## How the claims are checked
+
+| Claim | Check | Saved in |
+| --- | --- | --- |
+| A route is ○ / ● / ƒ | the route table printed by `next build` | `results/next-16.4.6-build-*.txt` |
+| A fallback is streamed before the page | `python3 -I bench/stream-timing.py <origin> [prefix]`: arrival time of each chunk, first and second visit to a fresh id | `results/cc-stream-timing-*.txt` |
+| What the browser paints | `bench/browser-probes.js`, pasted into DevTools on the deployed site | |
+| Cookies, `?q=`, fetch caching | the buttons and the uuid table on each page | |
+
+In `src/app/routes.ts`, `expected` is what the docs say and `measured` is copied from a saved build table. `measured: null` means no saved table covers that route yet.
+
+## Layout
+
+| Path | What |
+| --- | --- |
+| `src/app/<route>/page.tsx` | one route, one change |
+| `src/app/routes.ts` | every route's text (EN / 中文), expected and measured mode |
+| `src/app/stamp.tsx` | the frame each page renders: time, mode, source, diff |
+| `scripts/gen-sources.mjs` | copies each page's source into `sources.generated.ts` before dev and build |
+| `open-next.config.ts`, `wrangler.jsonc` | R2 incremental cache, Durable Object queue and tag cache (needed for ISR) |
+| `bench/`, `results/` | measurement scripts and their saved output |
+| `cc/` | the Cache Components app |
+
+## Inspiration
 
 https://www.youtube.com/watch?v=E1HzFvXgrCs&ab_channel=DaveGray

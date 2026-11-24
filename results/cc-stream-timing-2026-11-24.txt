@@ -1,0 +1,48 @@
+# cc/ sub-app on the Cloudflare Worker (cacheComponents + partialPrefetching +
+# experimental.disableResumeDataCacheCompression), Worker version
+# d99b715f-14b2-4bcd-87bd-672a9dffc287, deployed 2026-11-24T04:53Z.
+# measured 2026-11-24T09:03Z with bench/stream-timing.py, a fresh random id, two visits.
+# next start was not measured again on this date; the last next start numbers are in
+# cc-stream-timing-2026-11-22.txt.
+
+$ python3 -I bench/stream-timing.py https://cc.nextmode.jialin00.com /
+visit 1: https://cc.nextmode.jialin00.com/756726408 -> 200
+    0.23s    454 bytes loading=False rendered=False
+    0.23s   1369 bytes loading=True rendered=False
+    0.23s    222 bytes loading=False rendered=False
+    0.24s   1363 bytes loading=True rendered=False
+    0.24s   1369 bytes loading=True rendered=False
+    0.24s   1369 bytes loading=False rendered=False
+    0.24s   1369 bytes loading=False rendered=False
+    0.24s    332 bytes loading=False rendered=False
+    2.90s    247 bytes loading=False rendered=True
+    2.90s   1062 bytes loading=False rendered=True
+    2.91s   1363 bytes loading=True rendered=False
+    2.91s   1369 bytes loading=True rendered=False
+    2.91s   1369 bytes loading=False rendered=False
+    2.91s   1042 bytes loading=False rendered=False
+    2.92s    381 bytes loading=False rendered=False
+  rendered at: 2026-11-24T09:03:55.425Z
+visit 2: https://cc.nextmode.jialin00.com/756726408 -> 200
+    0.25s    450 bytes loading=False rendered=False
+    0.25s   1369 bytes loading=True rendered=False
+    0.25s    226 bytes loading=False rendered=False
+    0.25s   1363 bytes loading=True rendered=False
+    0.25s   1369 bytes loading=True rendered=False
+    0.25s   1369 bytes loading=False rendered=False
+    0.25s   1369 bytes loading=False rendered=False
+    0.25s    363 bytes loading=False rendered=False
+    0.25s    313 bytes loading=False rendered=False
+    0.25s    367 bytes loading=False rendered=False
+  rendered at: (none)
+  a Suspense boundary errored (or 5xx)
+
+# visit 1: fallback at 0.23s, content at 2.90s.
+# visit 2: ends at 0.25s with the fallback and no content; the stream marks the boundary as
+# errored ($RX("B:0", ...)). Not the same as 2026-11-22, when visit 2 on the Worker took about
+# 3 s and rendered again. What changed between the two dates is not established.
+#
+# wrangler tail for a failing visit (same Worker version, same day, a different id):
+#   Error: This promise was created by a request that has since ended, so it can never settle.
+#   Error: The Workers runtime canceled this request because it detected that your Worker's
+#   code had hung and would never generate a response.
