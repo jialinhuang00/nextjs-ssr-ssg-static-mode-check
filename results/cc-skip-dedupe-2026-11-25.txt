@@ -1,0 +1,48 @@
+# cc/ on the Cloudflare Worker with skipCrossRequestDedupe forced to true (the workaround from
+# opennextjs-cloudflare issue 1464), measured 2026-11-25T03:26Z.
+# Same build as version d99b715f (BUILD_ID Rdq3vCN4zbybM7R1FWfgX); only the OpenNext output was
+# changed, then deployed without rebuilding. Patched Worker version 60485b1f-a7ab-45dd-b9c1-cc0e59f5fded.
+
+$ python3 -I bench/patch-skip-dedupe.py cc/.open-next
+1 compiled, 0 source  server-functions/default/handler.mjs
+1 compiled, 0 source  server-functions/default/.next/server/chunks/ssr/[root-of-the-server]__1t_lijqzm24du._.js
+0 compiled, 1 source  server-functions/default/node_modules/.pnpm/next@16.4.6_.../node_modules/next/dist/server/use-cache/use-cache-wrapper.js
+3 replacements
+$ pnpm --dir cc exec opennextjs-cloudflare deploy
+
+## Second visit straight after the first, three fresh ids (chunk lines left out)
+$ python3 -I bench/stream-timing.py https://cc.nextmode.jialin00.com /
+visit 1: https://cc.nextmode.jialin00.com/990344641 -> 200
+  rendered at: 2026-11-25T03:26:49.431Z
+visit 2: https://cc.nextmode.jialin00.com/990344641 -> 200
+  rendered at: 2026-11-25T03:26:52.620Z
+visit 1: https://cc.nextmode.jialin00.com/393929124 -> 200
+  rendered at: 2026-11-25T03:26:55.653Z
+visit 2: https://cc.nextmode.jialin00.com/393929124 -> 200
+  rendered at: 2026-11-25T03:26:58.736Z
+visit 1: https://cc.nextmode.jialin00.com/412233980 -> 200
+  rendered at: 2026-11-25T03:27:01.290Z
+visit 2: https://cc.nextmode.jialin00.com/412233980 -> 200
+  rendered at: 2026-11-25T03:27:03.918Z
+
+## Second visit 13 to 16 s after the first (the labels are not the real gaps: the six first
+## visits run one after another)
+$ python3 -I bench/cc-second-visit-wait.py https://cc.nextmode.jialin00.com 0 1 2 4 6 30
+2026-11-25T03:27:06Z  visit 1 (wait 0s)      /12587732    200   2.97s   14237 bytes  rendered 2026-11-25T03:27:06.978Z  errored False  cf-ray a5fd8e32bdaa0fd7-TPE
+2026-11-25T03:27:09Z  visit 1 (wait 1s)      /851200224   200   2.52s   14242 bytes  rendered 2026-11-25T03:27:09.457Z  errored False  cf-ray a5fd8e453d838457-TPE
+2026-11-25T03:27:12Z  visit 1 (wait 2s)      /324340571   200   3.07s   14242 bytes  rendered 2026-11-25T03:27:12.486Z  errored False  cf-ray a5fd8e550973f6ca-TPE
+2026-11-25T03:27:14Z  visit 1 (wait 4s)      /975163075   200   2.46s   14242 bytes  rendered 2026-11-25T03:27:15.031Z  errored False  cf-ray a5fd8e683e950881-TPE
+2026-11-25T03:27:17Z  visit 1 (wait 6s)      /689431160   200   2.87s   14242 bytes  rendered 2026-11-25T03:27:17.811Z  errored False  cf-ray a5fd8e778b779e16-TPE
+2026-11-25T03:27:20Z  visit 1 (wait 30s)     /262776516   200   2.93s   14242 bytes  rendered 2026-11-25T03:27:20.805Z  errored False  cf-ray a5fd8e898a964a01-TPE
+2026-11-25T03:27:23Z  visit 2 after 0s       /12587732    200   2.51s   14237 bytes  rendered 2026-11-25T03:27:23.331Z  errored False  cf-ray a5fd8e9bbf4e843f-TPE
+2026-11-25T03:27:25Z  visit 2 after 1s       /851200224   200   2.53s   14242 bytes  rendered 2026-11-25T03:27:25.861Z  errored False  cf-ray a5fd8eab8a80826d-TPE
+2026-11-25T03:27:28Z  visit 2 after 2s       /324340571   200   2.58s   14242 bytes  rendered 2026-11-25T03:27:28.343Z  errored False  cf-ray a5fd8ebb5bad7d52-TPE
+2026-11-25T03:27:30Z  visit 2 after 4s       /975163075   200   2.56s   14242 bytes  rendered 2026-11-25T03:27:30.961Z  errored False  cf-ray a5fd8ecb7f744a6c-TPE
+2026-11-25T03:27:33Z  visit 2 after 6s       /689431160   200   2.51s   14242 bytes  rendered 2026-11-25T03:27:33.513Z  errored False  cf-ray a5fd8edb7b242be9-TPE
+2026-11-25T03:27:36Z  visit 2 after 30s      /262776516   200   2.52s   14242 bytes  rendered 2026-11-25T03:27:36.524Z  errored False  cf-ray a5fd8eee293703f0-TPE
+
+# With the patch, 9 of 9 second visits returned content; the second visit straight after the
+# first no longer fails (it failed every time without the patch, see cc-stream-timing-2026-11-24.txt
+# and cc-second-visit-wait-2026-11-24.txt).
+# Still true with the patch: every second visit was made again (about 2.5 s, new rendered time).
+# None returned the stored page, which next start does in 0.02 s.
